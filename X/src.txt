@@ -3,3 +3,4 @@ print("Hello, world!")
 # New feature C
 # hotfix A
 # proper New feature C
+# init
