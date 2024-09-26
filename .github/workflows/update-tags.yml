@@ -20,6 +20,11 @@ jobs:
     outputs:
       elementsChanged: ${{ steps.elements-changed-output.outputs.elementsChanged }}
       lastCommitSha: ${{ steps.get-last-commit.outputs.lastCommitSha }}
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REPO_OWNER: ${{ github.repository_owner }}
+      REPO_NAME: ${{ github.event.repository.name }}
+      GH_TOKEN: ${{ github.token }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -34,13 +39,8 @@ jobs:
       id: get-last-commit
       shell: pwsh
       run: |
-        $prNumber = "${{ github.event.pull_request.number }}"
-        $repoOwner = "${{ github.repository_owner }}"
-        $repoName = "${{ github.event.repository.name }}"
-        $githubToken = "${{ secrets.GITHUB_TOKEN }}"
-
         # Fetch the list of commits in the PR
-        $commits = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoOwner/$repoName/pulls/$prNumber/commits" -Headers @{ Authorization = "token $githubToken" }
+        $commits = gh pr view $PR_NUMBER --json commits[].sha -q '.commits[].sha'
 
         # Extract the last commit SHA
         $lastCommitSha = $commits[-1].sha
@@ -50,8 +50,6 @@ jobs:
 
     - name: 'Create head branch of PR'
       shell: pwsh
-      env: 
-        GH_TOKEN: ${{ github.token }}
       run: |
         git fetch --all
         Write-Host "Local branches:"
@@ -64,8 +62,6 @@ jobs:
           git fetch
           Write-Host "Remote branches:"
           git branch --list -r
-          git checkout -b ${{ github.event.pull_request.head.ref }} ${{ steps.get-last-commit.outputs.lastCommitSha }}
-          git push origin ${{ github.event.pull_request.head.ref }}
         }
         else {
           Write-Host "Branch ${{ github.event.pull_request.head.ref }} already exists."
