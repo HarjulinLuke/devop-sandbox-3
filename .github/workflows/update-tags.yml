@@ -51,15 +51,21 @@ jobs:
     - name: 'Create head branch of PR'
       shell: pwsh
       run: |
+        git fetch --all
         Write-Host "Local branches:"
         git branch --list
         Write-Host "Remote branches:"
         git branch --list -r
-
-        if ($null -eq (git branch --list -r ${{ github.event.pull_request.head.ref }})) {
-          Write-Host "Creating branch ${{ github.event.pull_request.head.ref }}..."
+        if ($null -eq (git branch --list -r origin/${{ github.event.pull_request.head.ref }})) {
+          Write-Host "Re-creating branch ${{ github.event.pull_request.head.ref }}..."
+          gh api repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/git/refs -X POST -F ref=refs/heads/${{ github.event.pull_request.head.ref }} -F sha=${{ steps.get-last-commit.outputs.lastCommitSha }}
+          git fetch
+          git branch --list -r
           git checkout -b ${{ github.event.pull_request.head.ref }} ${{ steps.get-last-commit.outputs.lastCommitSha }}
           git push origin ${{ github.event.pull_request.head.ref }}
+        }
+        else {
+          Write-Host "Branch ${{ github.event.pull_request.head.ref }} already exists."
         }
 
   PushNewTags:
