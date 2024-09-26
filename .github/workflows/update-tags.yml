@@ -40,7 +40,7 @@ jobs:
       shell: pwsh
       run: |
         # Fetch the list of commits in the PR
-        $lastCommitSha = gh pr view $PR_NUMBER --json commits -q '.commits[].oid'
+        $lastCommitSha = gh pr view ${{ env.PR_NUMBER }} --json commits -q '.commits[].oid'
         Write-Host "Last commit SHA: $lastCommitSha"
         "lastCommitSha=$lastCommitSha" >> $env:GITHUB_OUTPUT
 
@@ -54,7 +54,7 @@ jobs:
         git branch --list -r
         if ($null -eq (git branch --list -r origin/${{ github.event.pull_request.head.ref }})) {
           Write-Host "Re-creating branch ${{ github.event.pull_request.head.ref }}..."
-          gh api repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/git/refs -X POST -F ref=refs/heads/${{ github.event.pull_request.head.ref }} -F sha=${{ steps.get-last-commit.outputs.lastCommitSha }}
+          gh api repos/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}/git/refs -X POST -F ref=refs/heads/${{ github.event.pull_request.head.ref }} -F sha=${{ steps.get-last-commit.outputs.lastCommitSha }}
           git fetch
           Write-Host "Remote branches:"
           git branch --list -r
