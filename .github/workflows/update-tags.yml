@@ -40,11 +40,7 @@ jobs:
       shell: pwsh
       run: |
         # Fetch the list of commits in the PR
-        $commits = gh pr view $PR_NUMBER --json commits[].sha -q '.commits[].sha'
-
-        # Extract the last commit SHA
-        $lastCommitSha = $commits[-1].sha
-
+        $lastCommitSha = gh pr view $PR_NUMBER --json commits -q '.commits[].oid'
         Write-Host "Last commit SHA: $lastCommitSha"
         "lastCommitSha=$lastCommitSha" >> $env:GITHUB_OUTPUT
 
